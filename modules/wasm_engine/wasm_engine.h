@@ -3,8 +3,8 @@
 
 #include "core/reference.h"
 
-class WasmTimeEngine : public Reference {
-	GDCLASS(WasmTimeEngine, Reference);
+class WasmEngine : public Reference {
+	GDCLASS(WasmEngine, Reference);
 
 protected:
 	static void _bind_methods();
@@ -12,7 +12,7 @@ protected:
 public:
 	bool init_engine();
 
-	WasmTimeEngine();
+	WasmEngine();
 };
 
 

@@ -8,8 +8,8 @@ arch = arch_map[env["arch"]]
 env_wasmtime = env.Clone()
 env_wasmtime.add_source_files(env.modules_sources, "*.cpp")
 
-env_wasmtime.Append(CPPPATH=["#modules/wasmtime_engine/wasmtime/include"])
+env_wasmtime.Append(CPPPATH=["#modules/wasm_engine/wasmtime/include"])
 
-env.Append(LIBPATH=[f"#modules/wasmtime_engine/wasmtime/lib/{arch}-{platform}"])
+env.Append(LIBPATH=[f"#modules/wasm_engine/wasmtime/lib/{arch}-{platform}"])
 
 env.Append(LIBS=["wasmtime"])

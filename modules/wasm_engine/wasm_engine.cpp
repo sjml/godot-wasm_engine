@@ -1,9 +1,9 @@
-#include "wasmtime_engine.h"
+#include "wasm_engine.h"
 
 #include "wasmtime/include/wasm.h"
 #include "wasmtime/include/wasmtime.h"
 
-bool WasmTimeEngine::init_engine() {
+bool WasmEngine::init_engine() {
 	print_line("WasmTime Engine init...");
 
 	wasm_engine_t *engine = wasm_engine_new();
@@ -12,10 +12,10 @@ bool WasmTimeEngine::init_engine() {
 	return true;
 }
 
-void WasmTimeEngine::_bind_methods() {
-	ClassDB::bind_method(D_METHOD("init_engine"), &WasmTimeEngine::init_engine);
+void WasmEngine::_bind_methods() {
+	ClassDB::bind_method(D_METHOD("init_engine"), &WasmEngine::init_engine);
 }
 
-WasmTimeEngine::WasmTimeEngine() {
+WasmEngine::WasmEngine() {
 
 }
