@@ -27,6 +27,7 @@ if [ ! -n "$CLEAN_STRING" ]; then
   mkdir -p ./bin/${EXE_NAME}.app/Contents/MacOS
   cp ./bin/godot.osx.opt.tools.arm64 ./bin/${EXE_NAME}.app/Contents/MacOS/Godot
   chmod +x ./bin/${EXE_NAME}.app/Contents/MacOS/Godot
+  rm -rf ./bin/exes/${EXE_NAME}.app
   mv ./bin/${EXE_NAME}.app ./bin/exes
 fi
 
