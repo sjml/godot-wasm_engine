@@ -1,3 +1,12 @@
+This is a fork of [Godot](https://godotengine.org) that includes a WebAssembly 
+runtime as a module. Not much functionality to it at the moment; just compiled in, 
+but am working on adding some abilities to interact with GDScript from it.
+
+* **Goal:** Run WASM from GDScript, exposing specific script functions to the embedded runtime.
+* **Non-goal:** Replacing GDScript
+
+<hr/>
+
 # Godot Engine
 
 <p align="center">
