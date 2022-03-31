@@ -5,11 +5,15 @@ platform = platform_map[env["platform"]]
 arch_map = {"x86_64": "x86_64", "arm64": "aarch64"}
 arch = arch_map[env["arch"]]
 
-env_wasmtime = env.Clone()
-env_wasmtime.add_source_files(env.modules_sources, "*.cpp")
+env_wasm_engine = env.Clone()
+env_wasm_engine.add_source_files(env.modules_sources, "*.cpp")
 
-env_wasmtime.Append(CPPPATH=["#modules/wasm_engine/wasmtime/include"])
+env_wasm_engine.Append(CPPPATH=["#modules/wasm_engine/wasmtime/include"])
 
 env.Append(LIBPATH=[f"#modules/wasm_engine/wasmtime/lib/{arch}-{platform}"])
-
 env.Append(LIBS=["wasmtime"])
+
+if env["platform"] == "windows":
+    env_wasm_engine.Append(CCFLAGS=["-DWASM_API_EXTERN="])
+    # ws2_32, ole32, kernel32, bcrypt are already linked by the standard build system
+    env.Append(LIBS=["userenv", "ntdll"])

@@ -60,9 +60,9 @@ if [ ! -n "$CLEAN_STRING" ]; then
   cp ./bin/godot.osx.opt.universal       ./bin/osx_template.app/Contents/MacOS/godot_osx_release.64
   cp ./bin/godot.osx.opt.debug.universal ./bin/osx_template.app/Contents/MacOS/godot_osx_debug.64
   chmod +x ./bin/osx_template.app/Contents/MacOS/godot_osx*
-  cd bin
+  pushd bin
   zip -q -9 -r osx.zip osx_template.app
-  cd ..
+  popd
   mv ./bin/osx.zip ./bin/export_templates
 fi
 
@@ -72,7 +72,6 @@ scons $SCONS_FLAGS platform=windows target=release_debug arch=x86_64 bits=64 use
 if [ ! -n "$CLEAN_STRING" ]; then
   x86_64-w64-mingw32-strip ./bin/godot.windows.opt.tools.x86_64.exe
   cp ./bin/godot.windows.opt.tools.x86_64.exe ./bin/exes/${EXE_NAME}.exe
-  cp ./modules/wasm_engine/wasmtime/lib/x86_64-windows/wasmtime.dll ./bin/exes/
 fi
 
 # windows export templates
@@ -83,7 +82,6 @@ if [ ! -n "$CLEAN_STRING" ]; then
   x86_64-w64-mingw32-strip ./bin/godot.windows.opt.debug.x86_64.exe
   cp ./bin/godot.windows.opt.x86_64.exe       ./bin/export_templates/windows_64_release.exe
   cp ./bin/godot.windows.opt.debug.x86_64.exe ./bin/export_templates/windows_64_debug.exe
-  cp ./modules/wasm_engine/wasmtime/lib/x86_64-windows/wasmtime.dll ./bin/export_templates/
 fi
 
 
@@ -97,7 +95,7 @@ if [ ! -n "$CLEAN_STRING" ]; then
   fi
   if [ -f "./bin/exes/${EXE_NAME}.exe" ]; then
     pushd bin/exes
-    zip -q -9 -r "godot.${VERSION_STRING}.windows.x86_64.zip" ${EXE_NAME}.exe wasmtime.dll
+    zip -q -9 -r "godot.${VERSION_STRING}.windows.x86_64.zip" ${EXE_NAME}.exe
     mv "godot.${VERSION_STRING}.windows.x86_64.zip" ../dist
     popd
   fi
@@ -115,4 +113,3 @@ if [ -n "$CLEAN_STRING" ]; then
   rm -rf ./bin/osx_template.app
   rm -rf ./bin/godot.*
 fi
-
