@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -e
+
 cd "$(dirname "$0")"
 cd ..
 
@@ -24,6 +26,7 @@ mkdir -p ./bin/exes
 # macOS editor (universal)
 scons $SCONS_FLAGS platform=osx target=release_debug arch=arm64 
 scons $SCONS_FLAGS platform=osx target=release_debug arch=x86_64
+./bin/godot.osx.opt.tools.arm64 --version | tail -1 > ./bin/export_templates/version.txt
 if [ ! -n "$CLEAN_STRING" ]; then
   strip ./bin/godot.osx.opt.tools.arm64
   strip ./bin/godot.osx.opt.tools.x86_64 
@@ -60,21 +63,23 @@ if [ ! -n "$CLEAN_STRING" ]; then
 fi
 
 
-# windows editor (with link-time optimization)
-scons $SCONS_FLAGS platform=windows target=release_debug bits=64 use_mingw=true
+# windows editor
+scons $SCONS_FLAGS platform=windows target=release_debug arch=x86_64 bits=64 use_mingw=true
 if [ ! -n "$CLEAN_STRING" ]; then
-  x86_64-w64-mingw32-strip ./bin/godot.windows.opt.tools.64.exe
-  cp ./bin/godot.windows.opt.tools.64.exe ./bin/exes/${EXE_NAME}.exe
+  x86_64-w64-mingw32-strip ./bin/godot.windows.opt.tools.x86_64.exe
+  cp ./bin/godot.windows.opt.tools.x86_64.exe ./bin/exes/${EXE_NAME}.exe
+	cp ./modules/wasm_engine/wasmtime/lib/x86_64-windows/wasmtime.dll ./bin/exes/
 fi
 
-# windows export templates (with link-time optimization)
-scons $SCONS_FLAGS platform=windows tools=no target=release       bits=64 use_mingw=true
-scons $SCONS_FLAGS platform=windows tools=no target=release_debug bits=64 use_mingw=true
+# windows export templates
+scons $SCONS_FLAGS platform=windows tools=no target=release       arch=x86_64 bits=64 use_mingw=true
+scons $SCONS_FLAGS platform=windows tools=no target=release_debug arch=x86_64 bits=64 use_mingw=true
 if [ ! -n "$CLEAN_STRING" ]; then
-  x86_64-w64-mingw32-strip ./bin/godot.windows.opt.64.exe
-  x86_64-w64-mingw32-strip ./bin/godot.windows.opt.debug.64.exe
-  cp ./bin/godot.windows.opt.64.exe       ./bin/export_templates/windows_64_release.exe
-  cp ./bin/godot.windows.opt.debug.64.exe ./bin/export_templates/windows_64_debug.exe
+  x86_64-w64-mingw32-strip ./bin/godot.windows.opt.x86_64.exe
+  x86_64-w64-mingw32-strip ./bin/godot.windows.opt.debug.x86_64.exe
+  cp ./bin/godot.windows.opt.x86_64.exe       ./bin/export_templates/windows_64_release.exe
+  cp ./bin/godot.windows.opt.debug.x86_64.exe ./bin/export_templates/windows_64_debug.exe
+	cp ./modules/wasm_engine/wasmtime/lib/x86_64-windows/wasmtime.dll ./bin/export_templates/
 fi
 
 if [ -n "$CLEAN_STRING" ]; then

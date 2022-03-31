@@ -5,6 +5,10 @@ but am working on adding some abilities to interact with GDScript from it.
 * **Goal:** Run WASM from GDScript, exposing specific script functions to the embedded runtime.
 * **Non-goal:** Replacing GDScript
 
+GitHub actions are not enabled (because I don't want to stray too much from the original
+repo and the actions are *intense* over there), so no automatic pre-built binaries here, 
+but it's easy enough to run `scripts/build_all.sh` to get macOS and Windows versions at least.
+
 <hr/>
 
 # Godot Engine
