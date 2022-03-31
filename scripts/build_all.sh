@@ -18,15 +18,15 @@ fi
 SCONS_FLAGS="${CLEAN_STRING} --jobs=${JOB_COUNT} production=yes"
 
 
-
-mkdir -p ./bin/export_templates
-mkdir -p ./bin/exes
+if [ ! -n "$CLEAN_STRING" ]; then
+  mkdir -p ./bin/export_templates
+  mkdir -p ./bin/exes
+fi
 
 
 # macOS editor (universal)
 scons $SCONS_FLAGS platform=osx target=release_debug arch=arm64 
 scons $SCONS_FLAGS platform=osx target=release_debug arch=x86_64
-./bin/godot.osx.opt.tools.arm64 --version | tail -1 > ./bin/export_templates/version.txt
 if [ ! -n "$CLEAN_STRING" ]; then
   strip ./bin/godot.osx.opt.tools.arm64
   strip ./bin/godot.osx.opt.tools.x86_64 
@@ -38,6 +38,10 @@ if [ ! -n "$CLEAN_STRING" ]; then
   rm -rf ./bin/exes/${EXE_NAME}.app
   mv ./bin/${EXE_NAME}.app ./bin/exes
 fi
+
+# now that we have a built engine, get its version string
+VERSION_STRING=$(./bin/godot.osx.opt.tools.arm64 --version | tail -1)
+echo $VERSION_STRING > ./bin/export_templates/version.txt
 
 # macOS export templates (universal)
 scons $SCONS_FLAGS platform=osx tools=no target=release       arch=arm64 
@@ -68,7 +72,7 @@ scons $SCONS_FLAGS platform=windows target=release_debug arch=x86_64 bits=64 use
 if [ ! -n "$CLEAN_STRING" ]; then
   x86_64-w64-mingw32-strip ./bin/godot.windows.opt.tools.x86_64.exe
   cp ./bin/godot.windows.opt.tools.x86_64.exe ./bin/exes/${EXE_NAME}.exe
-	cp ./modules/wasm_engine/wasmtime/lib/x86_64-windows/wasmtime.dll ./bin/exes/
+  cp ./modules/wasm_engine/wasmtime/lib/x86_64-windows/wasmtime.dll ./bin/exes/
 fi
 
 # windows export templates
@@ -79,10 +83,36 @@ if [ ! -n "$CLEAN_STRING" ]; then
   x86_64-w64-mingw32-strip ./bin/godot.windows.opt.debug.x86_64.exe
   cp ./bin/godot.windows.opt.x86_64.exe       ./bin/export_templates/windows_64_release.exe
   cp ./bin/godot.windows.opt.debug.x86_64.exe ./bin/export_templates/windows_64_debug.exe
-	cp ./modules/wasm_engine/wasmtime/lib/x86_64-windows/wasmtime.dll ./bin/export_templates/
+  cp ./modules/wasm_engine/wasmtime/lib/x86_64-windows/wasmtime.dll ./bin/export_templates/
+fi
+
+
+if [ ! -n "$CLEAN_STRING" ]; then
+  mkdir -p bin/dist
+  if [ -d "./bin/exes/${EXE_NAME}.app" ]; then
+    pushd bin/exes
+    zip -q -9 -r "godot.${VERSION_STRING}.macOS.universal.zip" ${EXE_NAME}.app
+    mv "godot.${VERSION_STRING}.macOS.universal.zip" ../dist
+    popd
+  fi
+  if [ -f "./bin/exes/${EXE_NAME}.exe" ]; then
+    pushd bin/exes
+    zip -q -9 -r "godot.${VERSION_STRING}.windows.x86_64.zip" ${EXE_NAME}.exe wasmtime.dll
+    mv "godot.${VERSION_STRING}.windows.x86_64.zip" ../dist
+    popd
+  fi
+  if [ -d "./bin/export_templates" ]; then
+    pushd bin/export_templates
+    zip -q -9 -r "godot.${VERSION_STRING}.export_templates.zip" ./*
+    mv "godot.${VERSION_STRING}.export_templates.zip" ../dist
+    popd
+  fi
 fi
 
 if [ -n "$CLEAN_STRING" ]; then
-  rm -rf ./bin
+  rm -rf ./bin/exes
+  rm -rf ./bin/export_templates
+  rm -rf ./bin/osx_template.app
+  rm -rf ./bin/godot.*
 fi
 

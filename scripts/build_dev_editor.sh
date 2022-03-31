@@ -32,6 +32,8 @@ if [ ! -n "$CLEAN_STRING" ]; then
 fi
 
 if [ -n "$CLEAN_STRING" ]; then
-  rm -rf ./bin
+  rm -rf ./bin/exes
+  rm -rf ./bin/export_templates
+  rm -rf ./bin/godot.*
 fi
 
