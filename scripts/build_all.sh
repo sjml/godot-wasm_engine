@@ -87,6 +87,7 @@ fi
 
 if [ ! -n "$CLEAN_STRING" ]; then
   mkdir -p bin/dist
+  echo $VERSION_STRING > ./bin/dist/version.txt
   if [ -d "./bin/exes/${EXE_NAME}.app" ]; then
     pushd bin/exes
     zip -q -9 -r "godot.${VERSION_STRING}.macOS.universal.zip" ${EXE_NAME}.app

@@ -9,9 +9,25 @@ jobs:
   build:
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Setup Build Cache
+        uses: ./.github/actions/godot-cache
+        with:
+          cache-name: wasm_engine
+        continue-on-error: true
       - name: Install Prerequisites
         run: |
           brew install scons yasm mingw-w64
       - name: Build Engine and Export Templates
         run: ./scripts/build_all.sh
+      - name: Upload Distribution
+        uses: easingthemes/ssh-deploy@v2
+        env:
+          ARGS: "--compress --verbose --human-readable --recursive --delete --times"
+          SOURCE: "./bin/dist/"
+          EXCLUDE: "*/.DS_Store"
+          SSH_PRIVATE_KEY: ${{ secrets.WASM_ENGINE_SERVER_SSH_KEY }}
+          REMOTE_HOST: ${{ secrets.WASM_ENGINE_REMOTE_HOST }}
+          REMOTE_USER: ${{ secrets.WASM_ENGINE_REMOTE_USER }}
+          TARGET: ${{ secrets.WASM_ENGINE_REMOTE_TARGET_LATEST }}
