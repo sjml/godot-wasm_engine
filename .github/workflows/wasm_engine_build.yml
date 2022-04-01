@@ -5,6 +5,9 @@ on:
     branches: [ wasm_engine ]
   workflow_dispatch:
 
+env:
+  GODOT_BASE_BRANCH: 3.4
+
 jobs:
   build:
     runs-on: macos-latest
