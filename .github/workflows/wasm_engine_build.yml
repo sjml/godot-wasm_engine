@@ -1,0 +1,17 @@
+name: Build
+
+on:
+  push:
+    branches: [ wasm_engine ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install Prerequisites
+        run: |
+          brew install scons yasm mingw-w64
+      - name: Build Engine and Export Templates
+        run: ./scripts/build_all.sh
