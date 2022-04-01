@@ -8,6 +8,10 @@ on:
 env:
   GODOT_BASE_BRANCH: 3.4
 
+concurrency:
+  group: ci-${{github.ref}}-${{github.workflow}}-wasm_engine
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: macos-latest

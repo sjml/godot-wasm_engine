@@ -40,7 +40,7 @@ if [ ! -n "$CLEAN_STRING" ]; then
 fi
 
 # now that we have a built engine, get its version string
-VERSION_STRING=$(./bin/godot.osx.opt.tools.arm64 --version | tail -1)
+VERSION_STRING=$(./bin/godot.osx.opt.tools.universal --version | tail -1)
 echo $VERSION_STRING > ./bin/export_templates/version.txt
 
 # macOS export templates (universal)
