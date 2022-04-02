@@ -3,16 +3,21 @@
 
 #include "core/reference.h"
 
-class WasmEngine : public Reference {
-	GDCLASS(WasmEngine, Reference);
+#include "wasmtime/include/wasmtime.h"
+
+class WasmProgram : public Reference {
+	GDCLASS(WasmProgram, Reference);
 
 protected:
 	static void _bind_methods();
+	static void _print_wasmtime_error(const char* msg, wasmtime_error_t* err, wasm_trap_t *trap);
+
+private:
+	wasmtime_store_t* wasm_store;
 
 public:
-	bool init_engine();
-
-	WasmEngine();
+	WasmProgram();
+	~WasmProgram();
 };
 
 

@@ -3,6 +3,8 @@
 cd "$(dirname "$0")"
 cd ..
 
+set -e
+
 JOB_COUNT=$(sysctl -n hw.logicalcpu)
 EXE_NAME="Godot+WasmEngine"
 export BUILD_NAME="wasm_engine"

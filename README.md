@@ -2,13 +2,14 @@ This is a fork of [Godot](https://godotengine.org) that includes a WebAssembly
 runtime as a module. Not much functionality to it at the moment; just compiled in, 
 but am working on adding some abilities to interact with GDScript from it.
 
-* **Goal:** Run WASM from GDScript, exposing specific script functions to the embedded runtime.
-* **Non-goal:** Replacing GDScript
+* **Goal:** Exposing specific script functions to the embedded runtime so WebAssembly can 
+call GDScript and GDScript can call WebAssembly
+* **Non-goal:** Replacing GDScript for general use game creation
 
-GitHub actions are not enabled (because I don't want to stray too much from the original
-repo and the actions are *intense* over there), so no automatic pre-built binaries here, 
-but it's easy enough to run `scripts/build_all.sh` to get macOS and Windows versions at least.
+Almost all the GitHub actions are disabled, but [there is an autobuild of the latest version](https://shaneliesegang.com/projects/wasm-playground/builds/latest/). You can also just build locally with the [build_all](scripts/build_all.sh) or
+[build_dev_editor](scripts/build_dev_editor.sh) scripts.
 
+(Original Godot README follows.)
 <hr/>
 
 # Godot Engine

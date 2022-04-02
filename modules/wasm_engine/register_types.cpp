@@ -4,7 +4,7 @@
 #include "wasm_engine.h"
 
 void register_wasm_engine_types() {
-	ClassDB::register_class<WasmEngine>();
+	ClassDB::register_class<WasmProgram>();
 }
 
 void unregister_wasm_engine_types() {
