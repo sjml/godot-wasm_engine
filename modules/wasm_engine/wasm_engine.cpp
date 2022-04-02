@@ -5,7 +5,7 @@
 
 
 static wasm_engine_t *_engine = NULL;
-static u_int64_t _programCount = 0;
+static uint64_t _programCount = 0;
 
 static void _printTestMessage() {
 	print_line("This message printed by a call from WASM into Godot.");
