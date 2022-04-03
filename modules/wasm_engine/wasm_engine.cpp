@@ -1,6 +1,7 @@
 #include "wasm_engine.h"
 
 #include "core/script_language.h"
+#include "core/message_queue.h"
 
 #include "wasmtime/include/wasm.h"
 #include "wasmtime/include/wasmtime.h"
@@ -189,6 +190,8 @@ void WasmProgram::run_wat() {
 	WasmProgram* calling_program = (WasmProgram*)wasmtime_context_get_data(ctx);
 
 	MethodInfo mi = calling_program->wrapped_methods.get(*cmd_name);
+	assert(nargs == mi.arguments.size());
+
 	Array gd_args;
 	for (int i=0; i < mi.arguments.size(); i++) {
 		if (mi.arguments[i].type == Variant::Type::BOOL) {
@@ -202,6 +205,8 @@ void WasmProgram::run_wat() {
 		}
 	}
 
+	// TODO: figure out how to defer this
 	calling_program->go->callv(*cmd_name, gd_args);
+	// MessageQueue::get_singleton()->push_call(calling_program->go->get_instance_id(), *cmd_name, gd_args);
 	return NULL;
 }
