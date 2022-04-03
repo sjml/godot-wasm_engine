@@ -1,5 +1,7 @@
 #include "wasm_engine.h"
 
+#include "core/script_language.h"
+
 #include "wasmtime/include/wasm.h"
 #include "wasmtime/include/wasmtime.h"
 
@@ -7,23 +9,9 @@
 static wasm_engine_t *_engine = NULL;
 static uint64_t _programCount = 0;
 
-static void _printTestMessage() {
-	print_line("This message printed by a call from WASM into Godot.");
-}
-
-static wasm_trap_t* callback(
-	void* env,
-	wasmtime_caller_t* caller,
-	const wasmtime_val_t* args,
-	size_t nargs,
-	wasmtime_val_t* results,
-	size_t nresults
-) {
-	_printTestMessage();
-	return NULL;
-}
 
 /* static */ void WasmProgram::_bind_methods() {
+	ClassDB::bind_method(D_METHOD("set_game_object", "owner_object"), &WasmProgram::set_game_object);
 	ClassDB::bind_method(D_METHOD("load_wat", "wat_text"), &WasmProgram::load_wat);
 	ClassDB::bind_method(D_METHOD("run_wat"), &WasmProgram::run_wat);
 }
@@ -47,8 +35,10 @@ WasmProgram::WasmProgram() {
 		_engine = wasm_engine_new();
 	}
 	_programCount += 1;
-	this->store = wasmtime_store_new(_engine, NULL, NULL);
+	this->store = wasmtime_store_new(_engine, this, NULL);
 	this->module = NULL;
+
+	this->go = NULL;
 }
 
 WasmProgram::~WasmProgram() {
@@ -67,10 +57,54 @@ WasmProgram::~WasmProgram() {
 	}
 }
 
+void WasmProgram::set_game_object(Object* go) {
+	this->go = go;
+
+	List<MethodInfo> owner_method_list;
+	Ref<Script> go_script = this->go->get_script();
+	go_script.ptr()->get_script_method_list(&owner_method_list);
+	int error = 0;
+	for (int i=0; i < owner_method_list.size(); i++) {
+		MethodInfo mi = owner_method_list[i];
+		if (mi.name.begins_with("cmd_")) {
+			for (int j=0; j < mi.arguments.size(); j++) {
+				PropertyInfo arg = mi.arguments[j];
+				if (arg.type == Variant::Type::NIL) {
+					print_error("Cannot wrap method '" + mi.name + "'; all arguments must be type-hinted.");
+					error = 1;
+					continue;
+				}
+				else if (arg.type >= Variant::Type::STRING) {
+					print_error("Cannot wrap method '" + mi.name + "'; arguments can only be int, float, or bool.");
+					error = 2;
+					continue;
+				}
+			}
+			if (mi.return_val.type != Variant::Type::INT) {
+				print_error("Cannot wrap method '" + mi.name + "'; return value must be type-hinted as int.");
+				error = 3;
+			}
+
+			if (error != 0) {
+				continue;
+			}
+			this->wrapped_methods.set(mi.name, mi);
+		}
+	}
+}
+
 void WasmProgram::load_wat(String wat_text) {
+	if (this->go == NULL) {
+		print_error("Cannot call 'load_wat' without a game object.");
+		return;
+	}
+
+	wasm_trap_t* trap = NULL;
+	wasmtime_error_t* err = NULL;
+
 	wasm_byte_vec_t wasm;
 	CharString wat_text_str = wat_text.utf8();
-	wasmtime_error_t* err = wasmtime_wat2wasm(wat_text_str.get_data(), wat_text_str.length(), &wasm);
+	err = wasmtime_wat2wasm(wat_text_str.get_data(), wat_text_str.length(), &wasm);
 	if (err != NULL) {
 		WasmProgram::_print_wasmtime_error("failed to parse wat", err, NULL);
 		return;
@@ -88,16 +122,38 @@ void WasmProgram::load_wat(String wat_text) {
 	}
 
 	wasmtime_context_t* context = wasmtime_store_context(this->store);
+	wasmtime_extern_t* imports = (wasmtime_extern_t*)memalloc(sizeof(wasmtime_extern_t) * this->wrapped_methods.size());
 
-	wasm_functype_t *test_msg = wasm_functype_new_0_0();
-	wasmtime_func_t test;
-	wasmtime_func_new(context, test_msg, callback, NULL, NULL, &test);
+	const String* key = NULL;
+	int import_idx = -1;
+	while ((key = this->wrapped_methods.next(key))) {
+		import_idx += 1;
+		wasm_valtype_vec_t params, results;
+		wasm_valtype_vec_new_empty(&results);
+		MethodInfo mi = this->wrapped_methods.get(*key);
+		wasm_valtype_vec_new_uninitialized(&params, mi.arguments.size());
+		for (int i=0; i < mi.arguments.size(); i++) {
+			if (mi.arguments[i].type == Variant::Type::BOOL) {
+				params.data[i] = wasm_valtype_new_i32();
+			}
+			else if (mi.arguments[i].type == Variant::Type::INT) {
+				params.data[i] = wasm_valtype_new_i64();
+			}
+			else if (mi.arguments[i].type == Variant::Type::REAL) {
+				params.data[i] = wasm_valtype_new_f64();
+			}
+		}
 
-	wasm_trap_t* trap = NULL;
-	wasmtime_extern_t import;
-	import.kind = WASMTIME_EXTERN_FUNC;
-	import.of.func = test;
-	err = wasmtime_instance_new(context, this->module, &import, 1, &this->instance, &trap);
+		wasm_functype_t* wrapped_func_type = wasm_functype_new(&params, &results);
+		wasmtime_func_t wrapped_func;
+		wasmtime_func_new(context, wrapped_func_type, &WasmProgram::_wrapper_callback, (void*)key, NULL, &wrapped_func);
+
+		imports[import_idx].kind = WASMTIME_EXTERN_FUNC;
+		imports[import_idx].of.func = wrapped_func;
+	}
+
+	err = wasmtime_instance_new(context, this->module, imports, import_idx+1, &this->instance, &trap);
+	memfree(imports);
 	if (err != NULL || trap != NULL) {
 		WasmProgram::_print_wasmtime_error("failed to instantiate", err, trap);
 		return;
@@ -124,4 +180,28 @@ void WasmProgram::run_wat() {
 		WasmProgram::_print_wasmtime_error("failed to call function", err, trap);
 		return;
 	}
+}
+
+/* static */ wasm_trap_t* WasmProgram::_wrapper_callback(void* env, wasmtime_caller_t* caller, const wasmtime_val_t* args, size_t nargs, wasmtime_val_t* results, size_t nresults) {
+	String* cmd_name = (String*)env;
+	wasmtime_context_t* ctx = wasmtime_caller_context(caller);
+
+	WasmProgram* calling_program = (WasmProgram*)wasmtime_context_get_data(ctx);
+
+	MethodInfo mi = calling_program->wrapped_methods.get(*cmd_name);
+	Array gd_args;
+	for (int i=0; i < mi.arguments.size(); i++) {
+		if (mi.arguments[i].type == Variant::Type::BOOL) {
+			gd_args.push_back(Variant(args[i].of.i32));
+		}
+		else if (mi.arguments[i].type == Variant::Type::INT) {
+			gd_args.push_back(Variant(args[i].of.i64));
+		}
+		else if (mi.arguments[i].type == Variant::Type::REAL) {
+			gd_args.push_back(Variant(args[i].of.f64));
+		}
+	}
+
+	calling_program->go->callv(*cmd_name, gd_args);
+	return NULL;
 }
